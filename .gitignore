@@ -30,3 +30,6 @@ android/app/*.iml
 Thumbs.db
 .vscode/
 .idea/
+
+# APK binaries
+*.apk
