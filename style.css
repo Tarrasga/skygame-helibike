@@ -1,0 +1,434 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0b0f19;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #ffffff;
+}
+
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* UI Overlay */
+#ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+/* Top Bar: Connectivity & Game Info */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  pointer-events: auto;
+  gap: 10px;
+}
+
+.top-left-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-chip {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.stat-chip .label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.stat-chip .value {
+  font-size: 15px;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+/* Connection Pill Buttons */
+.connection-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-pill {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.btn-pill:hover, .btn-pill:active {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.btn-pill.connected {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.btn-pill.heart {
+  border-color: rgba(244, 63, 94, 0.4);
+}
+.btn-pill.heart.connected {
+  border-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.25);
+  color: #fda4af;
+}
+
+/* Top Right Score & Multiplier */
+.top-right-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 12px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.top-right-score .score-num {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  letter-spacing: 1px;
+}
+
+.top-right-score .combo-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #f59e0b;
+  text-transform: uppercase;
+}
+
+/* Altimeter Panel: Integrated neatly */
+.altimeter-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.altitude-meter-bar {
+  width: 6px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.altitude-fill {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 35%;
+  background: linear-gradient(to top, #38bdf8, #818cf8, #f59e0b);
+  border-radius: 3px;
+  transition: height 0.2s ease;
+}
+
+.alt-info {
+  display: flex;
+  flex-direction: column;
+}
+.alt-info .val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+.alt-info .unit {
+  font-size: 8px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+/* Bottom Cockpit Dashboard - Compact horizontal layout */
+.bottom-cockpit {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  pointer-events: none;
+  gap: 14px;
+  padding-bottom: 6px;
+}
+
+.gauge-card {
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.gauge-card.cadence-card {
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: scale(1.08);
+  margin-bottom: 4px;
+}
+
+.gauge-card .title {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.gauge-card .big-val {
+  font-size: 28px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.gauge-card.cadence-card .big-val {
+  color: #38bdf8;
+  text-shadow: 0 0 14px rgba(56, 189, 248, 0.6);
+}
+
+.gauge-card.sprint-active {
+  border-color: #f97316;
+  animation: pulseGlow 1s infinite alternate;
+}
+.gauge-card.sprint-active .big-val {
+  color: #f97316;
+  text-shadow: 0 0 16px rgba(249, 115, 22, 0.8);
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
+  100% { box-shadow: 0 0 30px rgba(249, 115, 22, 0.8); }
+}
+
+/* Smartwatch HR Card */
+.hr-val-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.heart-icon {
+  font-size: 18px;
+  color: #f43f5e;
+  animation: heartBeat 1.2s infinite;
+}
+
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.25); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.15); }
+}
+
+.zone-badge {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #334155;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Ergonomic On-Screen Steering Touchpads (Left & Right thumbs) */
+.touch-steering-zone {
+  position: absolute;
+  bottom: 20px;
+  width: 100px;
+  height: 150px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.touch-steering-zone:active, .touch-steering-zone.active {
+  background: rgba(56, 189, 248, 0.35);
+  border-color: #38bdf8;
+  transform: scale(0.96);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+}
+
+.touch-steering-zone.left {
+  left: 20px;
+}
+
+.touch-steering-zone.right {
+  right: 20px;
+}
+
+.touch-icon {
+  font-size: 28px;
+  color: #38bdf8;
+}
+
+.touch-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* Simulation Controls drawer */
+#sim-drawer {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 14px;
+  padding: 6px 16px;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+}
+
+#sim-drawer.visible {
+  display: flex;
+}
+
+#sim-drawer input[type="range"] {
+  width: 140px;
+  accent-color: #38bdf8;
+}
+
+/* Status Toast Notification & Modal */
+#status-toast {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90%;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid #38bdf8;
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
+  display: none;
+  pointer-events: auto;
+  z-index: 100;
+  line-height: 1.4;
+}
+
+#status-toast.show {
+  display: block;
+}
+
+#status-toast.error {
+  border-color: #f43f5e;
+  color: #fecdd3;
+}
+
+/* Horizontal / Landscape Mode Polish */
+@media (orientation: landscape) {
+  #ui-overlay {
+    padding: 8px 18px;
+  }
+
+  .touch-steering-zone {
+    width: 90px;
+    height: 130px;
+    bottom: 16px;
+  }
+
+  .gauge-card {
+    padding: 6px 14px;
+    min-width: 90px;
+  }
+
+  .gauge-card .big-val {
+    font-size: 24px;
+  }
+
+  .gauge-card.cadence-card .big-val {
+    font-size: 28px;
+  }
+}

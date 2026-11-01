@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f19">
+  <title>SkyGame: Helibike 3D</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- UI & Cockpit HUD Overlay -->
+  <div id="ui-overlay">
+    <!-- Top Control Bar -->
+    <header class="top-bar">
+      <!-- Distance, Calories & Altimeter (Grouped together) -->
+      <div class="top-left-stats">
+        <div class="stat-chip">
+          <span class="label">Distância</span>
+          <span class="value" id="val-distance">0.00 km</span>
+        </div>
+        <div class="stat-chip">
+          <span class="label">Calorias</span>
+          <span class="value" id="val-calories">0 kcal</span>
+        </div>
+        <!-- Altimeter neatly integrated in top bar -->
+        <div class="altimeter-panel">
+          <div class="altitude-meter-bar">
+            <div class="altitude-fill" id="altitude-fill"></div>
+          </div>
+          <div class="alt-info">
+            <span class="val" id="val-altitude">35</span>
+            <span class="unit">ALTURA (M)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Connect Action Buttons -->
+      <div class="connection-buttons">
+        <button id="btn-connect-bike" class="btn-pill">
+          <span>🚲</span> Ligar SMARTBIKE
+        </button>
+        <button id="btn-connect-hr" class="btn-pill heart">
+          <span>❤️</span> Ligar Relógio
+        </button>
+        <button id="btn-toggle-sim" class="btn-pill">
+          <span>🎮</span> Simulação
+        </button>
+      </div>
+
+      <!-- Score & Combo -->
+      <div class="top-right-score">
+        <span class="score-num" id="val-score">0</span>
+        <span class="combo-tag" id="val-combo">COMBO 1x</span>
+      </div>
+    </header>
+
+    <!-- Status Toast Notification -->
+    <div id="status-toast">A aguardar ligação...</div>
+
+    <!-- Ergonomic On-Screen Touch Steering Zones (Separated on Far Edges) -->
+    <div id="touch-left" class="touch-steering-zone left" title="Vira à Esquerda">
+      <span class="touch-icon">◀</span>
+      <span class="touch-label">Esquerda</span>
+    </div>
+    <div id="touch-right" class="touch-steering-zone right" title="Vira à Direita">
+      <span class="touch-icon">▶</span>
+      <span class="touch-label">Direita</span>
+    </div>
+
+    <!-- Bottom Cockpit Dashboard (Low Profile, Centered) -->
+    <footer class="bottom-cockpit">
+      <!-- Speedometer -->
+      <div class="gauge-card">
+        <span class="title">Velocidade</span>
+        <span class="big-val" id="val-speed">0</span>
+        <span class="title">KM / H</span>
+      </div>
+
+      <!-- Cadence (RPM) - Main Propeller Thrust Driver -->
+      <div class="gauge-card cadence-card" id="cadence-card">
+        <span class="title">Cadência</span>
+        <span class="big-val" id="val-cadence">0</span>
+        <span class="title">RPM</span>
+      </div>
+
+      <!-- Smartwatch Heart Rate -->
+      <div class="gauge-card">
+        <span class="title">Cardíaco</span>
+        <div class="hr-val-group">
+          <span class="heart-icon">♥</span>
+          <span class="big-val" id="val-bpm">--</span>
+        </div>
+        <span class="zone-badge" id="val-zone">DESLIGADO</span>
+      </div>
+    </footer>
+
+    <!-- Manual Simulation Controls (toggleable for PC / testing) -->
+    <div id="sim-drawer">
+      <span style="font-size: 11px; font-weight: 700;">Simular RPM:</span>
+      <input type="range" id="sim-rpm-slider" min="0" max="130" value="65">
+      <span id="sim-rpm-display" style="font-size: 12px; font-weight: 800; min-width: 45px;">65 RPM</span>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

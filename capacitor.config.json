@@ -1,0 +1,16 @@
+{
+  "appId": "com.skygame.helibike",
+  "appName": "SkyGame Helibike",
+  "webDir": "dist",
+  "server": {
+    "url": "https://192.168.1.65:5173",
+    "cleartext": true,
+    "allowNavigation": [
+      "192.168.1.65:5173",
+      "localhost"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
