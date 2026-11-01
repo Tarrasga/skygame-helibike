@@ -31,5 +31,4 @@ Thumbs.db
 .vscode/
 .idea/
 
-# APK binaries
-*.apk
+

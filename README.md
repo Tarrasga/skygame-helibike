@@ -1,8 +1,24 @@
 # 🚁 SkyGame: Helibike 3D
 
+[![Download APK](https://img.shields.io/badge/Download_APK-SkyGame--Helibike.apk-brightgreen?style=for-the-badge&logo=android)](https://github.com/Tarrasga/skygame-helibike/raw/main/SkyGame-Helibike.apk)
+[![GitHub Release](https://img.shields.io/github/v/release/Tarrasga/skygame-helibike?style=for-the-badge&color=blue)](https://github.com/Tarrasga/skygame-helibike/releases)
+
 Um jogo 3D de **exergaming** (treino interativo) para Android e Web, inspirado no clássico *Cyberbike* (Nintendo Wii).
 
 A tua bicicleta estática transforma-se numa **Helibike** futurista com hélice: quanto mais rápido pedalas, mais alto voas no céu! Passa por anéis a diferentes altitudes, desvia-te de obstáculos e monitoriza os teus batimentos cardíacos em tempo real através do teu smartwatch.
+
+---
+
+## 📲 Download & Instalação Rápida no Android
+
+Podes descarregar e instalar o jogo diretamente no teu telemóvel ou tablet:
+
+👉 **[CLICA AQUI PARA DESCARREGAR O APK (SkyGame-Helibike.apk)](https://github.com/Tarrasga/skygame-helibike/raw/main/SkyGame-Helibike.apk)**
+
+1. Abre este link no telemóvel ou tablet para descarregar o ficheiro `.apk`.
+2. Toca no ficheiro descarregado e confirma a instalação (*permitir instalar aplicações desta fonte*).
+3. Abre a aplicação **SkyGame Helibike** com o telemóvel na horizontal no guiador da bicicleta.
+4. Toca em **"Ligar SMARTBIKE"**, seleciona a tua bicicleta e começa a pedalar!
 
 ---
 
@@ -27,17 +43,6 @@ A tua bicicleta estática transforma-se numa **Helibike** futurista com hélice:
   * 🥇 **Ouro (Alta Altitude - 75m a 120m):** 500 pts (requer sprint real de alta cadência!).
 * **Bónus Cardio:** Ao treinares na tua zona aeróbica/cardio, ativas um multiplicador de **1.5x em todos os anéis**!
 * **Térmicas Ascendentes:** Correntes de ar quente que te impulsionam para cima permitindo descansar as pernas.
-
----
-
-## 📱 Instalação no Android
-
-Podes instalar o ficheiro APK gerado diretamente no teu telemóvel ou tablet:
-
-1. Descarrega o ficheiro `SkyGame-Helibike.apk` (ou da aba **Actions / Releases** no GitHub).
-2. Abre o ficheiro no Android e confirma a instalação.
-3. Coloca o dispositivo no suporte do guiador na horizontal.
-4. Toca em **"Ligar SMARTBIKE"**, seleciona a tua bicicleta e começa a pedalar!
 
 ---
 
