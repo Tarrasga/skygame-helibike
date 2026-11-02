@@ -13,9 +13,9 @@
 
   <!-- UI & Cockpit HUD Overlay -->
   <div id="ui-overlay">
-    <!-- Top Control Bar -->
+    <!-- Top Control Bar (Balanced 3-column layout) -->
     <header class="top-bar">
-      <!-- Distance, Calories & Altimeter -->
+      <!-- Top Left: Distance, Calories & Altitude -->
       <div class="top-left-stats">
         <div class="stat-chip">
           <span class="label">Distância</span>
@@ -30,46 +30,48 @@
             <div class="altitude-fill" id="altitude-fill"></div>
           </div>
           <div class="alt-info">
-            <span class="val" id="val-altitude">32</span>
+            <span class="val" id="val-altitude">36</span>
             <span class="unit">ALTURA (M)</span>
           </div>
         </div>
       </div>
 
-      <!-- Central Workout Interval Banner -->
-      <div class="workout-center-banner" id="workout-banner">
-        <span class="workout-phase-title" id="workout-phase-title">AQUECIMENTO</span>
-        <div class="workout-timer-row">
-          <span class="workout-time-remaining" id="workout-timer">3:00</span>
-          <span class="workout-target-pill" id="workout-target-rpm">META: 55 RPM</span>
+      <!-- Top Center: Workout Interval Banner & Quick Action Buttons -->
+      <div class="top-center-group">
+        <div class="workout-center-banner" id="workout-banner">
+          <span class="workout-phase-title" id="workout-phase-title">AQUECIMENTO</span>
+          <div class="workout-timer-row">
+            <span class="workout-time-remaining" id="workout-timer">3:00</span>
+            <span class="workout-target-pill" id="workout-target-rpm">META: 55 RPM</span>
+          </div>
+          <span class="workout-status-badge" id="workout-status-badge">RITMO INICIAL</span>
         </div>
-        <span class="workout-status-badge" id="workout-status-badge">RITMO INICIAL</span>
+
+        <!-- Action Pills Bar neatly centered under workout banner -->
+        <div class="connection-buttons">
+          <div class="difficulty-select-wrap">
+            <select id="select-difficulty" title="Dificuldade do treino">
+              <option value="facil">Fácil (+10)</option>
+              <option value="normal" selected>Normal (+15)</option>
+              <option value="dificil">Difícil (+20)</option>
+            </select>
+          </div>
+          <button id="btn-ranking" class="btn-pill rank" title="Ver classificação">
+            <span>🏆</span> Ranking
+          </button>
+          <button id="btn-connect-bike" class="btn-pill" title="Ligar à bicicleta FTMS">
+            <span>🚲</span> Ligar Bike
+          </button>
+          <button id="btn-connect-hr" class="btn-pill heart" title="Ligar ao Smartwatch">
+            <span>❤️</span> Relógio
+          </button>
+          <button id="btn-toggle-sim" class="btn-pill" title="Ativar modo de teste">
+            <span>🎮</span> Sim
+          </button>
+        </div>
       </div>
 
-      <!-- Action & Connection Buttons -->
-      <div class="connection-buttons">
-        <div class="difficulty-select-wrap">
-          <select id="select-difficulty" title="Escolhe a dificuldade do treino">
-            <option value="facil">Fácil (+10 RPM)</option>
-            <option value="normal" selected>Normal (+15 RPM)</option>
-            <option value="dificil">Difícil (+20 RPM)</option>
-          </select>
-        </div>
-        <button id="btn-ranking" class="btn-pill rank">
-          <span>🏆</span> Ranking
-        </button>
-        <button id="btn-connect-bike" class="btn-pill">
-          <span>🚲</span> Ligar Bike
-        </button>
-        <button id="btn-connect-hr" class="btn-pill heart">
-          <span>❤️</span> Relógio
-        </button>
-        <button id="btn-toggle-sim" class="btn-pill">
-          <span>🎮</span> Simulação
-        </button>
-      </div>
-
-      <!-- Score & Combo -->
+      <!-- Top Right: Score & Multiplier (Always visible!) -->
       <div class="top-right-score">
         <span class="score-num" id="val-score">0</span>
         <span class="combo-tag" id="val-combo">COMBO 1x</span>
@@ -119,10 +121,9 @@
         <button class="btn-close-modal" id="btn-close-ranking">✕</button>
       </div>
 
-      <!-- Save High Score Bar -->
       <div class="save-score-section" id="save-score-section">
         <input type="text" id="input-player-name" placeholder="O teu nome / apelido" maxlength="15">
-        <button class="btn-save-score" id="btn-save-score">Gravar Pontuação Atual</button>
+        <button class="btn-save-score" id="btn-save-score">Gravar Pontuação</button>
       </div>
 
       <div class="ranking-table-container">
@@ -132,14 +133,14 @@
               <th>Pos</th>
               <th>Piloto</th>
               <th>Pontos</th>
-              <th>Dificuldade</th>
+              <th>Nível</th>
               <th>RPM Máx</th>
               <th>Calorias</th>
               <th>Data</th>
             </tr>
           </thead>
           <tbody id="ranking-table-body">
-            <!-- Populated dynamically via JS -->
+            <!-- Dynamically populated -->
           </tbody>
         </table>
       </div>

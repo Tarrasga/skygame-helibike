@@ -21,14 +21,14 @@ export class Game {
     this.workout = new WorkoutManager('normal');
     this.ranking = new RankingManager();
 
-    // Flight Physics (X locked to 0 - No lateral movement!)
-    this.position = new THREE.Vector3(0, 32, 0);
+    // Flight Physics (X locked to 0, Y begins at cruise 35m)
+    this.position = new THREE.Vector3(0, 36, 0);
     this.velocity = new THREE.Vector3(0, 0, 18);
 
     // Bike Data State
-    this.currentCadence = 0;
-    this.targetCadence = 0;
-    this.currentSpeedKmh = 0;
+    this.currentCadence = 55;
+    this.targetCadence = 55;
+    this.currentSpeedKmh = 22;
     this.currentPowerWatts = 0;
     this.currentHeartRate = null;
     this.maxRpmRecorded = 0;
@@ -44,9 +44,7 @@ export class Game {
     this.calories = 0;
     this.totalSeconds = 0;
 
-    // Keyboard keys for RPM simulation (W/S or Up/Down)
     this.keys = {};
-
     this.onHUDUpdate = null;
 
     this.initThree();
@@ -81,7 +79,6 @@ export class Game {
   }
 
   initControls() {
-    // Only W/S or Arrow Up/Down for RPM simulation
     window.addEventListener('keydown', (e) => {
       this.keys[e.key.toLowerCase()] = true;
       this.audio.resume();
@@ -144,42 +141,37 @@ export class Game {
       this.currentSpeedKmh = (this.targetCadence / 80) * 32;
     }
 
-    this.currentCadence = THREE.MathUtils.lerp(this.currentCadence, this.targetCadence, delta * 3.5);
+    this.currentCadence = THREE.MathUtils.lerp(this.currentCadence, this.targetCadence, delta * 3.0);
 
     if (this.currentCadence > this.maxRpmRecorded) {
       this.maxRpmRecorded = Math.round(this.currentCadence);
     }
 
-    // 2. Update Workout Intervals (Warmup -> Sprint -> Recovery -> Sprint...)
+    // 2. Workout Intervals
     this.workout.update(delta);
     const workoutStatus = this.workout.getStatus(Math.round(this.currentCadence));
 
-    // 3. Flight Dynamics & Altitude Physics (Purely Cadence Driven!)
-    // Cruise altitude balance is ~55 RPM
-    // Sprints (>75-100+ RPM) generate rapid ascent to reach high golden rings!
-    const baseRpm = 55.0;
-    const rpmDifference = this.currentCadence - baseRpm;
-
-    let verticalThrust = 0;
-    if (rpmDifference > 0) {
-      // Climbing
-      verticalThrust = (rpmDifference / 40.0) * 18.0;
-    } else {
-      // Gliding down gently
-      verticalThrust = (rpmDifference / 40.0) * 10.0;
+    // 3. Equilibrium Flight Altitude directly mapped to Cadence RPM
+    // Prevents runaway climbing to ceiling!
+    // 30 RPM -> 18m
+    // 55 RPM -> 36m (Warmup cruise)
+    // 75 RPM -> 65m (Sprint 1)
+    // 90 RPM -> 85m (Sprint 2)
+    // 105 RPM -> 105m (Sprint 3)
+    // 120+ RPM -> 120m (Stratosphere)
+    let targetAltitude = 18;
+    if (this.currentCadence > 30) {
+      const norm = Math.min(1.0, (this.currentCadence - 30) / 90.0);
+      targetAltitude = 18 + Math.pow(norm, 1.15) * 102;
     }
 
-    // Forward Speed scales with Cadence
+    // Smooth climb / descent towards target equilibrium
+    this.position.y = THREE.MathUtils.lerp(this.position.y, targetAltitude, delta * 2.8);
+    this.position.x = 0; // Centered
+
+    // Forward Speed
     const forwardSpeed = 14.0 + (this.currentCadence / 100.0) * 16.0;
     this.velocity.z = forwardSpeed;
-
-    // Lateral position is LOCKED to 0 (No left/right steering!)
-    this.position.x = 0;
-
-    // Altitude clamped between 10m and 130m
-    this.position.y += verticalThrust * delta;
-    this.position.y = THREE.MathUtils.clamp(this.position.y, 10, 130);
-
     this.position.z += this.velocity.z * delta;
     this.distanceMeters = this.position.z;
 
@@ -191,19 +183,20 @@ export class Game {
     // 4. Audio
     this.audio.updatePropeller(this.currentCadence);
 
-    // 5. Update 3D World (Rings & Gems centered on X = 0)
+    // 5. Update 3D World (Rings spawn matching the workout target altitude!)
     this.world.update(
       delta,
       this.position,
       workoutStatus.isSprint,
+      workoutStatus.targetRpm,
       (ring) => this.handleRingCollected(ring, workoutStatus),
       (gem) => this.handleGemCollected(gem, workoutStatus)
     );
 
-    // 6. Camera - Centered behind Helibike with dramatic climb/dive tracking
+    // 6. Camera follows behind Helibike
     const cameraTargetPos = new THREE.Vector3(
       0,
-      this.position.y + 2.6,
+      this.position.y + 2.5,
       this.position.z - 7.5
     );
     this.camera.position.lerp(cameraTargetPos, delta * 7.0);
@@ -215,7 +208,7 @@ export class Game {
     );
     this.camera.lookAt(lookAtTarget);
 
-    // 7. Calories calculation
+    // 7. Calories
     const calPerSecond = (0.12 + (this.currentCadence / 100) * 0.2);
     this.calories += calPerSecond * delta;
 
@@ -237,14 +230,11 @@ export class Game {
   }
 
   handleRingCollected(ring, workoutStatus) {
-    // SPRINT BONUS MULTIPLIER:
-    // If in sprint phase and meeting or exceeding target RPM -> HUGE 3X MULTIPLIER!
     let phaseMultiplier = 1.0;
     if (workoutStatus.isSprint) {
       phaseMultiplier = workoutStatus.isMeetingTarget ? 3.0 : 1.5;
     }
 
-    // Smartwatch Cardio bonus
     let hrMultiplier = 1.0;
     if (this.currentHeartRate && this.currentHeartRate.zone.level >= 3) {
       hrMultiplier = 1.4;
