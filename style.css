@@ -108,18 +108,19 @@ body, html {
 /* Connectivity Row */
 .connect-action-row {
   display: flex;
-  gap: 10px;
+  width: 100%;
 }
 
 .menu-connect-btn {
-  flex: 1;
+  width: 100%;
   background: rgba(30, 41, 59, 0.7);
   border: 1.5px solid rgba(56, 189, 248, 0.4);
-  border-radius: 12px;
-  padding: 8px 12px;
+  border-radius: 14px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 12px;
   cursor: pointer;
   color: #ffffff;
   transition: all 0.2s ease;
@@ -140,28 +141,17 @@ body, html {
   color: #86efac;
 }
 
-.menu-connect-btn.heart {
-  border-color: rgba(244, 63, 94, 0.4);
-}
-.menu-connect-btn.heart.connected {
-  border-color: #f43f5e;
-  background: rgba(244, 63, 94, 0.2);
-}
-.menu-connect-btn.heart.connected .status {
-  color: #fda4af;
-}
-
 .menu-connect-btn .icon {
-  font-size: 22px;
+  font-size: 26px;
 }
 .menu-connect-btn .info .name {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
 }
 .menu-connect-btn .info .status {
   display: block;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: #94a3b8;
 }
@@ -515,12 +505,6 @@ body, html {
   color: #86efac;
 }
 
-.btn-pill.heart.connected {
-  border-color: #f43f5e;
-  background: rgba(244, 63, 94, 0.25);
-  color: #fda4af;
-}
-
 .btn-pill.rank {
   border-color: #fbbf24;
   color: #fde68a;
@@ -557,15 +541,15 @@ body, html {
   text-transform: uppercase;
 }
 
-/* Bottom Cockpit */
+/* Bottom Cockpit: Two prominent gauges (Speed & Cadence) */
 .bottom-cockpit {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   pointer-events: none;
-  gap: 16px;
-  padding-bottom: 4px;
+  gap: 28px;
+  padding-bottom: 6px;
 }
 
 .gauge-card {
@@ -573,23 +557,23 @@ body, html {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  padding: 6px 16px;
+  border-radius: 16px;
+  padding: 8px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 105px;
+  min-width: 130px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .gauge-card.cadence-card {
   border-color: rgba(56, 189, 248, 0.6);
-  transform: scale(1.1);
+  transform: scale(1.12);
   margin-bottom: 4px;
 }
 
 .gauge-card .title {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   color: #94a3b8;
   letter-spacing: 0.8px;
@@ -597,7 +581,7 @@ body, html {
 }
 
 .gauge-card .big-val {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 900;
   color: #ffffff;
   line-height: 1.1;
@@ -615,36 +599,6 @@ body, html {
 .gauge-card.sprint-active .big-val {
   color: #f97316;
   text-shadow: 0 0 16px rgba(249, 115, 22, 0.8);
-}
-
-.hr-val-group {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.heart-icon {
-  font-size: 16px;
-  color: #f43f5e;
-  animation: heartBeat 1.2s infinite;
-}
-
-@keyframes heartBeat {
-  0%, 100% { transform: scale(1); }
-  15% { transform: scale(1.25); }
-  30% { transform: scale(1); }
-  45% { transform: scale(1.15); }
-}
-
-.zone-badge {
-  font-size: 8px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 8px;
-  background: #334155;
-  color: #e2e8f0;
-  text-transform: uppercase;
-  margin-top: 2px;
 }
 
 /* Simulation Controls */

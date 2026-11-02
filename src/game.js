@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { Helibike } from './helibike.js';
 import { World } from './world.js';
-import { AudioManager } from './audio.js';
 import { BluetoothManager } from './bluetooth.js';
+import { AudioManager } from './audio.js';
 import { WorkoutManager } from './workout.js';
 import { RankingManager } from './ranking.js';
 
@@ -10,31 +10,26 @@ export class Game {
   constructor(container) {
     this.container = container;
 
-    // Game States: 'menu' | 'playing' | 'paused'
-    this.state = 'menu';
-
-    // Core Managers
-    this.scene = null;
-    this.camera = null;
-    this.renderer = null;
-    this.helibike = null;
-    this.world = null;
-    this.audio = new AudioManager();
+    // Subsystems
     this.bluetooth = new BluetoothManager();
+    this.audio = new AudioManager();
     this.workout = new WorkoutManager('normal');
     this.ranking = new RankingManager();
 
-    // Flight Physics
-    this.position = new THREE.Vector3(0, 36, 0);
-    this.velocity = new THREE.Vector3(0, 0, 18);
+    // Game State: 'menu' | 'playing' | 'paused'
+    this.state = 'menu';
 
-    // Bike Data State
-    this.currentCadence = 55;
-    this.targetCadence = 55;
-    this.currentSpeedKmh = 22;
+    // Physics & Helibike State
+    this.position = new THREE.Vector3(0, 14, 0);
+    this.velocity = new THREE.Vector3(0, 0, 0);
+
+    // Bike Data State (starts strictly at 0 when no bike connected)
+    this.currentCadence = 0;
+    this.targetCadence = 0;
+    this.currentSpeedKmh = 0;
     this.currentPowerWatts = 0;
-    this.currentHeartRate = null;
     this.maxRpmRecorded = 0;
+    this.lastBikeDataTime = 0;
 
     // Simulation / Demo Mode
     this.isSimulated = false;
@@ -103,11 +98,8 @@ export class Game {
     this.bluetooth.onBikeData = (data) => {
       this.targetCadence = data.cadence;
       this.currentSpeedKmh = data.speed;
-      this.currentPowerWatts = data.power;
-    };
-
-    this.bluetooth.onHeartRateData = (data) => {
-      this.currentHeartRate = data;
+      this.currentPowerWatts = data.power || 0;
+      this.lastBikeDataTime = performance.now();
     };
   }
 
@@ -123,7 +115,7 @@ export class Game {
     this.distanceMeters = 0;
     this.calories = 0;
     this.maxRpmRecorded = 0;
-    this.position.set(0, 36, 0);
+    this.position.set(0, 14, 0);
     this.audio.resume();
 
     if (this.onStateChange) {
@@ -174,7 +166,7 @@ export class Game {
   }
 
   update(delta) {
-    // 1. MENU STATE: Cinematic Showcase Hover
+    // 1. MENU STATE: Cinematic Showcase in Hangar
     if (this.state === 'menu') {
       const time = performance.now() * 0.001;
       this.helibike.mesh.position.set(0, 36 + Math.sin(time * 1.5) * 0.5, 0);
@@ -182,9 +174,9 @@ export class Game {
       this.helibike.mesh.rotation.z = Math.sin(time * 1.2) * 0.06;
 
       // Gentle rotor idle spin
-      this.helibike.update(delta, 45, 0, false);
+      this.helibike.update(delta, 35, 0, false);
 
-      // Camera views the Helibike slightly from the front/side
+      // Camera views the Helibike smoothly from front/side
       const camX = Math.sin(time * 0.3) * 6;
       const camZ = -9 + Math.cos(time * 0.3) * 3;
       this.camera.position.lerp(new THREE.Vector3(camX, 38, camZ), delta * 4);
@@ -197,16 +189,40 @@ export class Game {
       return;
     }
 
-    // 3. PLAYING STATE: Full Flight Simulation
+    // 3. PLAYING STATE: Flight Simulation
     this.totalSeconds += delta;
 
-    // Cadence determination
-    if (this.isSimulated || (!this.bluetooth.bikeDeviceId && this.targetCadence === 0)) {
+    // Cadence & Speed Determination:
+    // If not connected to bike and not simulated -> SPEED AND CADENCE ARE STRICTLY 0!
+    if (this.isSimulated) {
       this.targetCadence = this.simRpm;
-      this.currentSpeedKmh = (this.targetCadence / 80) * 32;
+      if (this.targetCadence > 0) {
+        // Minimum speed 18 km/h, increasing with RPM
+        this.currentSpeedKmh = 18.0 + Math.max(0, (this.targetCadence - 20) * 0.35);
+      } else {
+        this.currentSpeedKmh = 0;
+      }
+    } else if (!this.bluetooth.bikeDeviceId) {
+      // No bike connected -> 0 RPM & 0 KM/H
+      this.targetCadence = 0;
+      this.currentSpeedKmh = 0;
+    } else {
+      // Connected to bike: watchdog for inactivity (player stopped pedaling)
+      const secondsSinceData = (performance.now() - this.lastBikeDataTime) / 1000;
+      if (secondsSinceData > 2.5) {
+        this.targetCadence = 0;
+        this.currentSpeedKmh = 0;
+      }
     }
 
-    this.currentCadence = THREE.MathUtils.lerp(this.currentCadence, this.targetCadence, delta * 3.0);
+    // Smooth cadence interpolation
+    this.currentCadence = THREE.MathUtils.lerp(this.currentCadence, this.targetCadence, delta * 3.5);
+
+    // If cadence dropped to near zero, snap to 0
+    if (this.currentCadence < 2.0 && this.targetCadence === 0) {
+      this.currentCadence = 0;
+      this.currentSpeedKmh = 0;
+    }
 
     if (this.currentCadence > this.maxRpmRecorded) {
       this.maxRpmRecorded = Math.round(this.currentCadence);
@@ -216,28 +232,43 @@ export class Game {
     this.workout.update(delta);
     const workoutStatus = this.workout.getStatus(Math.round(this.currentCadence));
 
-    // Target flight altitude based on Cadence RPM (Aerodynamic equilibrium)
-    let targetAltitude = 18;
-    if (this.currentCadence > 30) {
-      const norm = Math.min(1.0, (this.currentCadence - 30) / 90.0);
+    // Calculate Speed:
+    // "a velocidade minima tem que ser 18km/h e indo aumentando. quando naoo tiver ligacao a bike a velocidade fica a 0"
+    let displaySpeedKmh = 0;
+    let forwardSpeedMps = 0;
+
+    if (this.currentCadence > 5) {
+      const baseSpeed = 18.0;
+      const rpmIncrease = Math.max(0, (this.currentCadence - 20) * 0.35);
+      displaySpeedKmh = Math.round((baseSpeed + rpmIncrease) * 10) / 10;
+      forwardSpeedMps = displaySpeedKmh / 3.6;
+    } else {
+      displaySpeedKmh = 0;
+      forwardSpeedMps = 0;
+    }
+
+    // Advance distance along Z
+    this.velocity.z = forwardSpeedMps;
+    this.position.z += this.velocity.z * delta;
+    this.distanceMeters = this.position.z;
+
+    // Flight Altitude (Aerodynamic lift from RPM):
+    // When stopped (0 RPM), Helibike glides to ground runway level (y = 12)
+    let targetAltitude = 12;
+    if (this.currentCadence > 25) {
+      const norm = Math.min(1.0, (this.currentCadence - 25) / 95.0);
       targetAltitude = 18 + Math.pow(norm, 1.15) * 102;
     }
 
     this.position.y = THREE.MathUtils.lerp(this.position.y, targetAltitude, delta * 2.8);
     this.position.x = 0;
 
-    // Forward Speed
-    const forwardSpeed = 14.0 + (this.currentCadence / 100.0) * 16.0;
-    this.velocity.z = forwardSpeed;
-    this.position.z += this.velocity.z * delta;
-    this.distanceMeters = this.position.z;
-
     this.helibike.mesh.position.copy(this.position);
 
     const isSprint = workoutStatus.isSprint && workoutStatus.isMeetingTarget;
-    this.helibike.update(delta, this.currentCadence, forwardSpeed, isSprint);
+    this.helibike.update(delta, this.currentCadence, forwardSpeedMps, isSprint);
 
-    // Audio
+    // Propeller audio
     this.audio.updatePropeller(this.currentCadence);
 
     // World Update (Rings & Gems)
@@ -265,21 +296,22 @@ export class Game {
     );
     this.camera.lookAt(lookAtTarget);
 
-    // Calories
-    const calPerSecond = (0.12 + (this.currentCadence / 100) * 0.2);
-    this.calories += calPerSecond * delta;
+    // Calories: only increment when actively pedaling
+    if (this.currentCadence > 10) {
+      const calPerSecond = (0.10 + (this.currentCadence / 100) * 0.18);
+      this.calories += calPerSecond * delta;
+    }
 
     // HUD Update
     if (this.onHUDUpdate) {
       this.onHUDUpdate({
         cadence: Math.round(this.currentCadence),
-        speed: Math.round(this.currentSpeedKmh || forwardSpeed * 2.2),
+        speed: Math.round(displaySpeedKmh),
         altitude: Math.round(this.position.y),
         score: this.score,
         combo: this.combo,
         distanceKm: (this.distanceMeters / 1000).toFixed(2),
         calories: Math.round(this.calories),
-        heartRate: this.currentHeartRate,
         workout: workoutStatus,
         maxRpm: this.maxRpmRecorded,
         gameState: this.state
@@ -293,21 +325,18 @@ export class Game {
       phaseMultiplier = workoutStatus.isMeetingTarget ? 3.0 : 1.5;
     }
 
-    let hrMultiplier = 1.0;
-    if (this.currentHeartRate && this.currentHeartRate.zone.level >= 3) {
-      hrMultiplier = 1.4;
-    }
-
-    const earned = Math.round(ring.points * this.combo * phaseMultiplier * hrMultiplier);
-    this.score += earned;
-    this.combo = Math.min(15, this.combo + 1);
-
-    this.audio.playRingChime(ring.type);
+    this.score += Math.round(100 * phaseMultiplier * this.combo);
+    this.combo = Math.min(8, this.combo + 1);
+    this.audio.playRingSound();
   }
 
   handleGemCollected(gem, workoutStatus) {
-    const multiplier = workoutStatus.isSprint && workoutStatus.isMeetingTarget ? 2.5 : 1.0;
-    this.score += Math.round(gem.points * multiplier);
-    this.audio.playGemChime();
+    let phaseMultiplier = 1.0;
+    if (workoutStatus.isSprint) {
+      phaseMultiplier = workoutStatus.isMeetingTarget ? 3.0 : 1.5;
+    }
+
+    this.score += Math.round(250 * phaseMultiplier * this.combo);
+    this.audio.playGemSound();
   }
 }

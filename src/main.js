@@ -9,8 +9,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const uiOverlay = document.getElementById('ui-overlay');
   const menuBtnBike = document.getElementById('menu-btn-bike');
   const menuBikeStatus = document.getElementById('menu-bike-status');
-  const menuBtnHr = document.getElementById('menu-btn-hr');
-  const menuHrStatus = document.getElementById('menu-hr-status');
   const diffButtons = document.querySelectorAll('.diff-btn');
   const menuBtnRanking = document.getElementById('menu-btn-ranking');
   const menuBtnSim = document.getElementById('menu-btn-sim');
@@ -24,7 +22,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const btnPauseGame = document.getElementById('btn-pause-game');
   const btnRankingHud = document.getElementById('btn-ranking-hud');
   const btnConnectBikeHud = document.getElementById('btn-connect-bike-hud');
-  const btnConnectHrHud = document.getElementById('btn-connect-hr-hud');
 
   const simDrawer = document.getElementById('sim-drawer');
   const simSlider = document.getElementById('sim-rpm-slider');
@@ -40,8 +37,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const valSpeed = document.getElementById('val-speed');
   const valCadence = document.getElementById('val-cadence');
   const cadenceCard = document.getElementById('cadence-card');
-  const valBpm = document.getElementById('val-bpm');
-  const valZone = document.getElementById('val-zone');
 
   const workoutBanner = document.getElementById('workout-banner');
   const workoutPhaseTitle = document.getElementById('workout-phase-title');
@@ -79,7 +74,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // A. Bluetooth Connection Handlers
   async function handleConnectBike() {
     try {
-      showToast('A procurar SMARTBIKE...');
+      showToast('A procurar bicicleta...');
       const name = await game.bluetooth.connectBike();
       menuBtnBike.classList.add('connected');
       menuBikeStatus.textContent = `✔ Conectada (${name})`;
@@ -96,27 +91,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function handleConnectHr() {
-    try {
-      showToast('A procurar Smartwatch / Monitor Cardíaco...');
-      const name = await game.bluetooth.connectSmartwatch();
-      menuBtnHr.classList.add('connected');
-      menuHrStatus.textContent = `✔ Conectado (${name})`;
-      btnConnectHrHud.classList.add('connected');
-      btnConnectHrHud.innerHTML = `<span>♥</span> ${name}`;
-      showToast(`Smartwatch ${name} ligado!`, false, 4000);
-    } catch (err) {
-      if (err.name !== 'NotFoundError') {
-        showToast(err.message, true, 7000);
-      }
-    }
-  }
-
   menuBtnBike.addEventListener('click', handleConnectBike);
   btnConnectBikeHud.addEventListener('click', handleConnectBike);
-
-  menuBtnHr.addEventListener('click', handleConnectHr);
-  btnConnectHrHud.addEventListener('click', handleConnectHr);
 
   // B. Difficulty Selection Handlers
   diffButtons.forEach((btn) => {
@@ -148,7 +124,7 @@ window.addEventListener('DOMContentLoaded', () => {
       showToast('Simulação ativada (teclas W/S ou slider)');
     } else {
       simDrawer.classList.remove('visible');
-      showToast('Simulação desativada');
+      showToast('Simulação desativada. Velocidade a 0.');
     }
   });
 
@@ -201,7 +177,7 @@ window.addEventListener('DOMContentLoaded', () => {
       score: game.score,
       difficulty: game.workout.difficulty,
       maxRpm: game.maxRpmRecorded,
-      calories: game.calories,
+      calories: Math.round(game.calories),
       distanceKm: (game.distanceMeters / 1000).toFixed(2)
     });
 
@@ -286,14 +262,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       workoutStatusBadge.className = 'workout-status-badge';
     }
-
-    // Heart Rate
-    if (stats.heartRate) {
-      valBpm.textContent = stats.heartRate.bpm;
-      valZone.textContent = stats.heartRate.zone.name;
-      valZone.style.backgroundColor = stats.heartRate.zone.color;
-      valZone.style.color = '#000000';
-    }
   };
 
   game.bluetooth.onStatusChange = (type, status, message) => {
@@ -301,14 +269,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (status === 'disconnected') {
       if (type === 'bike') {
         menuBtnBike.classList.remove('connected');
-        menuBikeStatus.textContent = 'Desconectada (Toca p/ Ligar)';
+        menuBikeStatus.textContent = 'Não Conectada (Toca p/ Ligar)';
         btnConnectBikeHud.classList.remove('connected');
         btnConnectBikeHud.innerHTML = '<span>🚲</span> Ligar Bike';
-      } else if (type === 'heart') {
-        menuBtnHr.classList.remove('connected');
-        menuHrStatus.textContent = 'Desconectado (Toca p/ Ligar)';
-        btnConnectHrHud.classList.remove('connected');
-        btnConnectHrHud.innerHTML = '<span>❤️</span> Smartwatch';
       }
     }
   };
