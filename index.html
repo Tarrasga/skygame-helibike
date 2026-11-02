@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b0f19">
-  <title>SkyGame: Helibike 3D</title>
+  <title>SkyGame: Helibike 3D - Intervalos & Sprints</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
   <div id="ui-overlay">
     <!-- Top Control Bar -->
     <header class="top-bar">
-      <!-- Distance, Calories & Altimeter (Grouped together) -->
+      <!-- Distance, Calories & Altimeter -->
       <div class="top-left-stats">
         <div class="stat-chip">
           <span class="label">Distância</span>
@@ -25,25 +25,44 @@
           <span class="label">Calorias</span>
           <span class="value" id="val-calories">0 kcal</span>
         </div>
-        <!-- Altimeter neatly integrated in top bar -->
         <div class="altimeter-panel">
           <div class="altitude-meter-bar">
             <div class="altitude-fill" id="altitude-fill"></div>
           </div>
           <div class="alt-info">
-            <span class="val" id="val-altitude">35</span>
+            <span class="val" id="val-altitude">32</span>
             <span class="unit">ALTURA (M)</span>
           </div>
         </div>
       </div>
 
-      <!-- Quick Connect Action Buttons -->
+      <!-- Central Workout Interval Banner -->
+      <div class="workout-center-banner" id="workout-banner">
+        <span class="workout-phase-title" id="workout-phase-title">AQUECIMENTO</span>
+        <div class="workout-timer-row">
+          <span class="workout-time-remaining" id="workout-timer">3:00</span>
+          <span class="workout-target-pill" id="workout-target-rpm">META: 55 RPM</span>
+        </div>
+        <span class="workout-status-badge" id="workout-status-badge">RITMO INICIAL</span>
+      </div>
+
+      <!-- Action & Connection Buttons -->
       <div class="connection-buttons">
+        <div class="difficulty-select-wrap">
+          <select id="select-difficulty" title="Escolhe a dificuldade do treino">
+            <option value="facil">Fácil (+10 RPM)</option>
+            <option value="normal" selected>Normal (+15 RPM)</option>
+            <option value="dificil">Difícil (+20 RPM)</option>
+          </select>
+        </div>
+        <button id="btn-ranking" class="btn-pill rank">
+          <span>🏆</span> Ranking
+        </button>
         <button id="btn-connect-bike" class="btn-pill">
-          <span>🚲</span> Ligar SMARTBIKE
+          <span>🚲</span> Ligar Bike
         </button>
         <button id="btn-connect-hr" class="btn-pill heart">
-          <span>❤️</span> Ligar Relógio
+          <span>❤️</span> Relógio
         </button>
         <button id="btn-toggle-sim" class="btn-pill">
           <span>🎮</span> Simulação
@@ -60,33 +79,20 @@
     <!-- Status Toast Notification -->
     <div id="status-toast">A aguardar ligação...</div>
 
-    <!-- Ergonomic On-Screen Touch Steering Zones (Separated on Far Edges) -->
-    <div id="touch-left" class="touch-steering-zone left" title="Vira à Esquerda">
-      <span class="touch-icon">◀</span>
-      <span class="touch-label">Esquerda</span>
-    </div>
-    <div id="touch-right" class="touch-steering-zone right" title="Vira à Direita">
-      <span class="touch-icon">▶</span>
-      <span class="touch-label">Direita</span>
-    </div>
-
-    <!-- Bottom Cockpit Dashboard (Low Profile, Centered) -->
+    <!-- Bottom Cockpit Dashboard -->
     <footer class="bottom-cockpit">
-      <!-- Speedometer -->
       <div class="gauge-card">
         <span class="title">Velocidade</span>
         <span class="big-val" id="val-speed">0</span>
         <span class="title">KM / H</span>
       </div>
 
-      <!-- Cadence (RPM) - Main Propeller Thrust Driver -->
       <div class="gauge-card cadence-card" id="cadence-card">
-        <span class="title">Cadência</span>
+        <span class="title">Cadência (Pedal)</span>
         <span class="big-val" id="val-cadence">0</span>
         <span class="title">RPM</span>
       </div>
 
-      <!-- Smartwatch Heart Rate -->
       <div class="gauge-card">
         <span class="title">Cardíaco</span>
         <div class="hr-val-group">
@@ -97,11 +103,48 @@
       </div>
     </footer>
 
-    <!-- Manual Simulation Controls (toggleable for PC / testing) -->
+    <!-- Manual Simulation Controls -->
     <div id="sim-drawer">
       <span style="font-size: 11px; font-weight: 700;">Simular RPM:</span>
-      <input type="range" id="sim-rpm-slider" min="0" max="130" value="65">
-      <span id="sim-rpm-display" style="font-size: 12px; font-weight: 800; min-width: 45px;">65 RPM</span>
+      <input type="range" id="sim-rpm-slider" min="0" max="140" value="60">
+      <span id="sim-rpm-display" style="font-size: 12px; font-weight: 800; min-width: 45px;">60 RPM</span>
+    </div>
+  </div>
+
+  <!-- Ranking / Leaderboard Modal -->
+  <div class="modal-backdrop" id="ranking-modal">
+    <div class="ranking-card">
+      <div class="ranking-header">
+        <h2>🏆 Ranking dos Melhores Pilotos</h2>
+        <button class="btn-close-modal" id="btn-close-ranking">✕</button>
+      </div>
+
+      <!-- Save High Score Bar -->
+      <div class="save-score-section" id="save-score-section">
+        <input type="text" id="input-player-name" placeholder="O teu nome / apelido" maxlength="15">
+        <button class="btn-save-score" id="btn-save-score">Gravar Pontuação Atual</button>
+      </div>
+
+      <div class="ranking-table-container">
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>Pos</th>
+              <th>Piloto</th>
+              <th>Pontos</th>
+              <th>Dificuldade</th>
+              <th>RPM Máx</th>
+              <th>Calorias</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-table-body">
+            <!-- Populated dynamically via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <button class="btn-close-modal" id="btn-close-ranking-bottom">Voltar ao Jogo</button>
     </div>
   </div>
 

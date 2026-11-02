@@ -3,12 +3,14 @@ import { Helibike } from './helibike.js';
 import { World } from './world.js';
 import { AudioManager } from './audio.js';
 import { BluetoothManager } from './bluetooth.js';
+import { WorkoutManager } from './workout.js';
+import { RankingManager } from './ranking.js';
 
 export class Game {
   constructor(container) {
     this.container = container;
 
-    // Core Components
+    // Core Managers
     this.scene = null;
     this.camera = null;
     this.renderer = null;
@@ -16,12 +18,12 @@ export class Game {
     this.world = null;
     this.audio = new AudioManager();
     this.bluetooth = new BluetoothManager();
+    this.workout = new WorkoutManager('normal');
+    this.ranking = new RankingManager();
 
-    // Flight Physics State
-    this.position = new THREE.Vector3(0, 35, 0);
-    this.velocity = new THREE.Vector3(0, 0, 18); // forward m/s
-    this.steerInput = 0;
-    this.steerVelocity = 0;
+    // Flight Physics (X locked to 0 - No lateral movement!)
+    this.position = new THREE.Vector3(0, 32, 0);
+    this.velocity = new THREE.Vector3(0, 0, 18);
 
     // Bike Data State
     this.currentCadence = 0;
@@ -29,10 +31,11 @@ export class Game {
     this.currentSpeedKmh = 0;
     this.currentPowerWatts = 0;
     this.currentHeartRate = null;
+    this.maxRpmRecorded = 0;
 
     // Simulation / Demo Mode
     this.isSimulated = false;
-    this.simRpm = 65;
+    this.simRpm = 60;
 
     // Game Progression & Stats
     this.score = 0;
@@ -40,13 +43,10 @@ export class Game {
     this.distanceMeters = 0;
     this.calories = 0;
     this.totalSeconds = 0;
-    this.thermalBoostTimer = 0;
 
-    // Controls
+    // Keyboard keys for RPM simulation (W/S or Up/Down)
     this.keys = {};
-    this.touchSteer = 0;
 
-    // Callbacks for UI updates
     this.onHUDUpdate = null;
 
     this.initThree();
@@ -56,7 +56,7 @@ export class Game {
 
   initThree() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x38bdf8); // Sky Blue
+    this.scene.background = new THREE.Color(0x38bdf8);
 
     this.camera = new THREE.PerspectiveCamera(
       65,
@@ -69,11 +69,9 @@ export class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.container.appendChild(this.renderer.domElement);
 
-    // Add Helibike and World
     this.helibike = new Helibike();
     this.scene.add(this.helibike.mesh);
 
@@ -83,13 +81,13 @@ export class Game {
   }
 
   initControls() {
-    // Keyboard controls (A/Left Arrow for Left, D/Right Arrow for Right, W/S for RPM)
+    // Only W/S or Arrow Up/Down for RPM simulation
     window.addEventListener('keydown', (e) => {
       this.keys[e.key.toLowerCase()] = true;
       this.audio.resume();
 
       if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') {
-        this.simRpm = Math.min(130, this.simRpm + 5);
+        this.simRpm = Math.min(140, this.simRpm + 5);
       } else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') {
         this.simRpm = Math.max(0, this.simRpm - 5);
       }
@@ -98,17 +96,6 @@ export class Game {
     window.addEventListener('keyup', (e) => {
       this.keys[e.key.toLowerCase()] = false;
     });
-
-    // Device Tilt / Gyroscope support
-    if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', (e) => {
-        if (e.gamma !== null && Math.abs(e.gamma) > 4) {
-          this.gyroSteer = THREE.MathUtils.clamp(-e.gamma / 25, -1, 1);
-        } else {
-          this.gyroSteer = 0;
-        }
-      });
-    }
   }
 
   initBluetoothCallbacks() {
@@ -123,9 +110,8 @@ export class Game {
     };
   }
 
-  setTouchSteer(direction) {
-    this.touchSteer = direction;
-    this.audio.resume();
+  setDifficulty(diff) {
+    this.workout.setDifficulty(diff);
   }
 
   start() {
@@ -152,91 +138,88 @@ export class Game {
   update(delta) {
     this.totalSeconds += delta;
 
-    // 1. Cadence & Speed Determination
+    // 1. Cadence determination
     if (this.isSimulated || (!this.bluetooth.bikeDevice && this.targetCadence === 0)) {
       this.targetCadence = this.simRpm;
-      this.currentSpeedKmh = (this.targetCadence / 80) * 30;
+      this.currentSpeedKmh = (this.targetCadence / 80) * 32;
     }
 
     this.currentCadence = THREE.MathUtils.lerp(this.currentCadence, this.targetCadence, delta * 3.5);
 
-    // 2. Flight Dynamics & Altitude Physics
+    if (this.currentCadence > this.maxRpmRecorded) {
+      this.maxRpmRecorded = Math.round(this.currentCadence);
+    }
+
+    // 2. Update Workout Intervals (Warmup -> Sprint -> Recovery -> Sprint...)
+    this.workout.update(delta);
+    const workoutStatus = this.workout.getStatus(Math.round(this.currentCadence));
+
+    // 3. Flight Dynamics & Altitude Physics (Purely Cadence Driven!)
+    // Cruise altitude balance is ~55 RPM
+    // Sprints (>75-100+ RPM) generate rapid ascent to reach high golden rings!
     const baseRpm = 55.0;
     const rpmDifference = this.currentCadence - baseRpm;
 
     let verticalThrust = 0;
     if (rpmDifference > 0) {
-      verticalThrust = (rpmDifference / 45.0) * 16.0;
+      // Climbing
+      verticalThrust = (rpmDifference / 40.0) * 18.0;
     } else {
-      verticalThrust = (rpmDifference / 45.0) * 9.0;
+      // Gliding down gently
+      verticalThrust = (rpmDifference / 40.0) * 10.0;
     }
 
-    if (this.thermalBoostTimer > 0) {
-      this.thermalBoostTimer -= delta;
-      verticalThrust += 18.0;
-    }
-
-    // Forward speed (m/s)
-    const forwardSpeed = 12.0 + (this.currentCadence / 100.0) * 14.0;
+    // Forward Speed scales with Cadence
+    const forwardSpeed = 14.0 + (this.currentCadence / 100.0) * 16.0;
     this.velocity.z = forwardSpeed;
 
-    // Steer Input Resolution (Swapped direction as requested so Left turns Left, Right turns Right)
-    let steer = this.touchSteer;
-    if (this.keys['a'] || this.keys['arrowleft']) steer += 1;
-    if (this.keys['d'] || this.keys['arrowright']) steer -= 1;
-    if (this.gyroSteer) steer += this.gyroSteer;
-    this.steerInput = THREE.MathUtils.clamp(steer, -1, 1);
+    // Lateral position is LOCKED to 0 (No left/right steering!)
+    this.position.x = 0;
 
-    // Smooth lateral movement: positive moves left, negative moves right
-    this.steerVelocity = THREE.MathUtils.lerp(this.steerVelocity, -this.steerInput * 18.0, delta * 5.0);
-
-    // Update Position
-    this.position.x += this.steerVelocity * delta;
-    this.position.x = THREE.MathUtils.clamp(this.position.x, -50, 50);
-
+    // Altitude clamped between 10m and 130m
     this.position.y += verticalThrust * delta;
-    this.position.y = THREE.MathUtils.clamp(this.position.y, 6, 140);
+    this.position.y = THREE.MathUtils.clamp(this.position.y, 10, 130);
 
     this.position.z += this.velocity.z * delta;
     this.distanceMeters = this.position.z;
 
     this.helibike.mesh.position.copy(this.position);
 
-    const isSprint = this.currentCadence > 85;
-    this.helibike.update(delta, this.currentCadence, forwardSpeed, this.steerInput, isSprint);
+    const isSprint = workoutStatus.isSprint && workoutStatus.isMeetingTarget;
+    this.helibike.update(delta, this.currentCadence, forwardSpeed, isSprint);
 
-    // 3. Audio & Propeller Hum
+    // 4. Audio
     this.audio.updatePropeller(this.currentCadence);
 
-    // 4. Update 3D World (Rings, Gems, Clouds, Collisions)
+    // 5. Update 3D World (Rings & Gems centered on X = 0)
     this.world.update(
       delta,
       this.position,
-      (ring) => this.handleRingCollected(ring),
-      (gem) => this.handleGemCollected(gem),
-      () => this.handleThermalEntered()
+      workoutStatus.isSprint,
+      (ring) => this.handleRingCollected(ring, workoutStatus),
+      (gem) => this.handleGemCollected(gem, workoutStatus)
     );
 
-    // 5. Follow Camera
+    // 6. Camera - Centered behind Helibike with dramatic climb/dive tracking
     const cameraTargetPos = new THREE.Vector3(
-      this.position.x * 0.85,
-      this.position.y + 2.8,
-      this.position.z - 7.8
+      0,
+      this.position.y + 2.6,
+      this.position.z - 7.5
     );
-    this.camera.position.lerp(cameraTargetPos, delta * 7.5);
+    this.camera.position.lerp(cameraTargetPos, delta * 7.0);
 
     const lookAtTarget = new THREE.Vector3(
-      this.position.x,
+      0,
       this.position.y + 1.2,
-      this.position.z + 16
+      this.position.z + 18
     );
     this.camera.lookAt(lookAtTarget);
 
-    // 6. Calories Calculation
-    const calPerSecond = (0.1 + (this.currentCadence / 100) * 0.18);
+    // 7. Calories calculation
+    const calPerSecond = (0.12 + (this.currentCadence / 100) * 0.2);
     this.calories += calPerSecond * delta;
 
-    // 7. HUD notification
+    // 8. HUD Update
     if (this.onHUDUpdate) {
       this.onHUDUpdate({
         cadence: Math.round(this.currentCadence),
@@ -247,32 +230,36 @@ export class Game {
         distanceKm: (this.distanceMeters / 1000).toFixed(2),
         calories: Math.round(this.calories),
         heartRate: this.currentHeartRate,
-        isSprint,
-        thermalActive: this.thermalBoostTimer > 0
+        workout: workoutStatus,
+        maxRpm: this.maxRpmRecorded
       });
     }
   }
 
-  handleRingCollected(ring) {
-    let hrMultiplier = 1.0;
-    if (this.currentHeartRate && this.currentHeartRate.zone.level >= 3) {
-      hrMultiplier = 1.5;
+  handleRingCollected(ring, workoutStatus) {
+    // SPRINT BONUS MULTIPLIER:
+    // If in sprint phase and meeting or exceeding target RPM -> HUGE 3X MULTIPLIER!
+    let phaseMultiplier = 1.0;
+    if (workoutStatus.isSprint) {
+      phaseMultiplier = workoutStatus.isMeetingTarget ? 3.0 : 1.5;
     }
 
-    const earned = Math.round(ring.points * this.combo * hrMultiplier);
+    // Smartwatch Cardio bonus
+    let hrMultiplier = 1.0;
+    if (this.currentHeartRate && this.currentHeartRate.zone.level >= 3) {
+      hrMultiplier = 1.4;
+    }
+
+    const earned = Math.round(ring.points * this.combo * phaseMultiplier * hrMultiplier);
     this.score += earned;
-    this.combo = Math.min(10, this.combo + 1);
+    this.combo = Math.min(15, this.combo + 1);
 
     this.audio.playRingChime(ring.type);
   }
 
-  handleGemCollected(gem) {
-    this.score += gem.points;
+  handleGemCollected(gem, workoutStatus) {
+    const multiplier = workoutStatus.isSprint && workoutStatus.isMeetingTarget ? 2.5 : 1.0;
+    this.score += Math.round(gem.points * multiplier);
     this.audio.playGemChime();
-  }
-
-  handleThermalEntered() {
-    this.thermalBoostTimer = 3.5;
-    this.audio.playThermalWhoosh();
   }
 }

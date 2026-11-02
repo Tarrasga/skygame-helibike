@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 /**
  * 3D Procedural Helibike Model for SkyGame
- * Inspired by Cyberbike (Nintendo Wii) and futuristic flight vehicles.
+ * Focused on Cadence, Altitude Lift, and Thruster Boost.
  */
 export class Helibike {
   constructor() {
@@ -25,7 +25,6 @@ export class Helibike {
   }
 
   createModel() {
-    // Materials
     const carbonMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
       metalness: 0.8,
@@ -69,36 +68,32 @@ export class Helibike {
       opacity: 0.8
     });
 
-    // 1. Central Aero Monocoque Frame
+    // 1. Central Aero Frame
     const frameGeo = new THREE.BoxGeometry(0.35, 0.45, 1.8);
     const frame = new THREE.Mesh(frameGeo, cyberOrangeMat);
     frame.position.set(0, 0.7, 0);
     this.mesh.add(frame);
 
-    // Streamlined top spine
     const spineGeo = new THREE.CylinderGeometry(0.12, 0.18, 1.9, 16);
     const spine = new THREE.Mesh(spineGeo, carbonMat);
     spine.rotation.x = Math.PI / 2;
     spine.position.set(0, 0.95, 0);
     this.mesh.add(spine);
 
-    // 2. Wheels (Aero Flight Skids & Gyro Wheels)
+    // 2. Wheels
     const wheelGeo = new THREE.TorusGeometry(0.42, 0.08, 16, 32);
     const rimMat = neonCyanMat;
 
-    // Front Wheel
     const frontWheel = new THREE.Mesh(wheelGeo, rimMat);
     frontWheel.position.set(0, 0.42, 0.95);
     this.mesh.add(frontWheel);
     this.wheels.push(frontWheel);
 
-    // Rear Wheel
     const rearWheel = new THREE.Mesh(wheelGeo, rimMat);
     rearWheel.position.set(0, 0.42, -0.95);
     this.mesh.add(rearWheel);
     this.wheels.push(rearWheel);
 
-    // Forks & Struts
     const strutGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8);
     const frontFork = new THREE.Mesh(strutGeo, chromeMat);
     frontFork.position.set(0, 0.55, 0.85);
@@ -110,14 +105,13 @@ export class Helibike {
     rearFork.rotation.x = -0.3;
     this.mesh.add(rearFork);
 
-    // 3. Handlebars and Aero Cockpit Screen
+    // 3. Handlebars and Windshield
     const barGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.85);
     const bar = new THREE.Mesh(barGeo, carbonMat);
     bar.rotation.z = Math.PI / 2;
     bar.position.set(0, 1.15, 0.6);
     this.mesh.add(bar);
 
-    // Flight Grips
     const gripGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.18);
     const leftGrip = new THREE.Mesh(gripGeo, cyberOrangeMat);
     leftGrip.position.set(-0.4, 1.15, 0.6);
@@ -129,14 +123,12 @@ export class Helibike {
     rightGrip.rotation.z = Math.PI / 2;
     this.mesh.add(rightGrip);
 
-    // Windshield
     const windshieldGeo = new THREE.ConeGeometry(0.3, 0.6, 16, 1, true, 0, Math.PI);
     const windshield = new THREE.Mesh(windshieldGeo, windshieldMat);
     windshield.position.set(0, 1.25, 0.7);
     windshield.rotation.x = -0.8;
     this.mesh.add(windshield);
 
-    // Saddle / Pilot Seat
     const seatGeo = new THREE.BoxGeometry(0.26, 0.1, 0.45);
     const seat = new THREE.Mesh(seatGeo, carbonMat);
     seat.position.set(0, 0.95, -0.2);
@@ -149,7 +141,6 @@ export class Helibike {
     this.pedalGroup.position.set(0, 0.45, 0);
     this.pedalGroup.add(crank);
 
-    // Left & Right Pedals
     const pedalArmL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.22, 0.05), chromeMat);
     pedalArmL.position.set(-0.25, 0.1, 0);
     this.pedalGroup.add(pedalArmL);
@@ -166,23 +157,19 @@ export class Helibike {
     mast.position.set(0, 1.45, 0);
     this.mesh.add(mast);
 
-    // Rotor Hub
     this.rotorGroup.position.set(0, 1.95, 0);
-
     const hubGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16);
     const hub = new THREE.Mesh(hubGeo, chromeMat);
     this.rotorGroup.add(hub);
 
-    // 3 Aerodynamic Helicopter Blades
     const bladeGeo = new THREE.BoxGeometry(0.18, 0.02, 1.4);
     for (let i = 0; i < 3; i++) {
       const angle = (i * Math.PI * 2) / 3;
       const blade = new THREE.Mesh(bladeGeo, bladeMat);
       blade.position.set(Math.sin(angle) * 0.75, 0, Math.cos(angle) * 0.75);
       blade.rotation.y = angle;
-      blade.rotation.x = 0.08; // pitch angle for lift!
+      blade.rotation.x = 0.08;
 
-      // Glowing tip
       const tipGeo = new THREE.BoxGeometry(0.19, 0.025, 0.2);
       const tip = new THREE.Mesh(tipGeo, neonCyanMat);
       tip.position.set(0, 0, 0.65);
@@ -191,7 +178,6 @@ export class Helibike {
       this.rotorGroup.add(blade);
     }
 
-    // Motion Blur Propeller Disc (transparent, visible at high RPM)
     const blurDiscGeo = new THREE.CylinderGeometry(1.5, 1.5, 0.02, 32);
     const blurDiscMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
@@ -210,14 +196,12 @@ export class Helibike {
     boom.position.set(0, 0.95, -1.35);
     this.mesh.add(boom);
 
-    // Tail Fin
     const finGeo = new THREE.BoxGeometry(0.04, 0.5, 0.35);
     const fin = new THREE.Mesh(finGeo, cyberOrangeMat);
     fin.position.set(0, 1.15, -1.95);
     fin.rotation.x = -0.4;
     this.mesh.add(fin);
 
-    // Tail Rotor
     this.tailRotorGroup.position.set(0.06, 1.25, -2.05);
     const tailBladeGeo = new THREE.BoxGeometry(0.04, 0.45, 0.015);
     const tailBlade1 = new THREE.Mesh(tailBladeGeo, neonCyanMat);
@@ -227,7 +211,7 @@ export class Helibike {
     this.tailRotorGroup.add(tailBlade2);
     this.mesh.add(this.tailRotorGroup);
 
-    // 7. Jet Thruster Nozzles (emit glowing exhaust)
+    // 7. Jet Thruster Nozzles
     const thrusterGeo = new THREE.CylinderGeometry(0.08, 0.11, 0.3, 16);
     const thrusterMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.9 });
 
@@ -241,7 +225,6 @@ export class Helibike {
     rightThruster.position.set(0.24, 0.65, -0.85);
     this.mesh.add(rightThruster);
 
-    // Cast shadows
     this.mesh.traverse((child) => {
       if (child.isMesh) {
         child.castShadow = true;
@@ -249,11 +232,11 @@ export class Helibike {
       }
     });
 
-    this.mesh.scale.set(1.1, 1.1, 1.1);
+    this.mesh.scale.set(1.15, 1.15, 1.15);
   }
 
   createParticleTrails() {
-    const particleCount = 60;
+    const particleCount = 70;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -263,7 +246,6 @@ export class Helibike {
       positions[i * 3 + 1] = 0.65 + (Math.random() - 0.5) * 0.2;
       positions[i * 3 + 2] = -0.9 - Math.random() * 2.0;
 
-      // Cyan / Orange glow
       colors[i * 3] = 0.0;
       colors[i * 3 + 1] = 0.8 + Math.random() * 0.2;
       colors[i * 3 + 2] = 1.0;
@@ -273,10 +255,10 @@ export class Helibike {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-      size: 0.12,
+      size: 0.14,
       vertexColors: true,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.7,
       blending: THREE.AdditiveBlending
     });
 
@@ -285,13 +267,12 @@ export class Helibike {
   }
 
   /**
-   * Update Helibike animations based on RPM, forward speed, and steering roll
-   * steerRate: -1 for full LEFT, +1 for full RIGHT
+   * Update Helibike animations based on RPM and forward speed (No lateral steering)
    */
-  update(delta, cadenceRpm, forwardSpeed, steerRate, isSprint) {
+  update(delta, cadenceRpm, forwardSpeed, isSprint) {
     // 1. Rotor spin
-    const targetRPS = Math.max(cadenceRpm / 60, 0.5);
-    const rotorSpeed = targetRPS * Math.PI * 2 * 2.5;
+    const targetRPS = Math.max(cadenceRpm / 60, 0.6);
+    const rotorSpeed = targetRPS * Math.PI * 2 * 2.8;
     this.rotorAngle += rotorSpeed * delta;
     this.rotorGroup.rotation.y = this.rotorAngle;
 
@@ -304,9 +285,9 @@ export class Helibike {
     this.pedalAngle += pedalSpeed * delta;
     this.pedalGroup.rotation.x = this.pedalAngle;
 
-    // Motion blur propeller disc
+    // Blur disc opacity
     if (this.blurDisc) {
-      const targetOpacity = THREE.MathUtils.clamp((cadenceRpm - 40) / 60, 0, 0.45);
+      const targetOpacity = THREE.MathUtils.clamp((cadenceRpm - 40) / 60, 0, 0.5);
       this.blurDisc.material.opacity = THREE.MathUtils.lerp(
         this.blurDisc.material.opacity,
         targetOpacity,
@@ -320,36 +301,22 @@ export class Helibike {
       wheel.rotation.x = this.wheelAngle;
     }
 
-    // 2. Flight banking & aerodynamic pitch
-    // Bank (roll) into the turn:
-    // When steerRate < 0 (LEFT): lean left (positive Z rotation in Three.js)
-    // When steerRate > 0 (RIGHT): lean right (negative Z rotation in Three.js)
-    const targetRoll = -steerRate * 0.45;
-    this.mesh.rotation.z = THREE.MathUtils.lerp(this.mesh.rotation.z, targetRoll, delta * 6);
-
-    // Yaw heading:
-    // When steerRate < 0 (LEFT): nose points left (negative Y rotation)
-    // When steerRate > 0 (RIGHT): nose points right (positive Y rotation)
-    const targetYaw = -steerRate * 0.22;
-    this.mesh.rotation.y = THREE.MathUtils.lerp(this.mesh.rotation.y, targetYaw, delta * 5);
-
-    // Pitch: nose up when climbing (high RPM), nose slightly down when diving/gliding
-    const verticalRate = (cadenceRpm - 60) / 40;
-    const targetPitch = THREE.MathUtils.clamp(-verticalRate * 0.12, -0.3, 0.25);
+    // Aerodynamic Pitch (nose up when climbing, level on cruise, nose slightly down on dive)
+    const verticalRate = (cadenceRpm - 55) / 40;
+    const targetPitch = THREE.MathUtils.clamp(-verticalRate * 0.14, -0.32, 0.22);
     this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, targetPitch, delta * 4);
 
-    // Hover float micro-wobble
-    const time = performance.now() * 0.003;
-    const hoverWobble = Math.sin(time) * 0.04;
-    this.mesh.position.y += hoverWobble * delta;
+    // Subtle gentle aerodynamic float
+    const time = performance.now() * 0.0025;
+    this.mesh.rotation.z = Math.sin(time) * 0.03; // Gentle bank oscillation
 
-    // 3. Particle Exhaust update
+    // Particle Exhaust
     if (this.trailParticles) {
       const positions = this.trailParticles.geometry.attributes.position.array;
       const count = positions.length / 3;
 
       for (let i = 0; i < count; i++) {
-        positions[i * 3 + 2] -= (10.0 + forwardSpeed * 0.5) * delta;
+        positions[i * 3 + 2] -= (12.0 + forwardSpeed * 0.6) * delta;
         if (positions[i * 3 + 2] < -3.5) {
           const side = Math.random() > 0.5 ? 0.24 : -0.24;
           positions[i * 3] = side + (Math.random() - 0.5) * 0.08;
@@ -358,8 +325,8 @@ export class Helibike {
         }
       }
       this.trailParticles.geometry.attributes.position.needsUpdate = true;
-      this.trailParticles.material.opacity = isSprint ? 0.9 : 0.35;
-      this.trailParticles.material.size = isSprint ? 0.2 : 0.1;
+      this.trailParticles.material.opacity = isSprint ? 0.95 : 0.35;
+      this.trailParticles.material.size = isSprint ? 0.22 : 0.12;
     }
   }
 }
