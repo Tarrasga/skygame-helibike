@@ -10,6 +10,9 @@ export class Game {
   constructor(container) {
     this.container = container;
 
+    // Game States: 'menu' | 'playing' | 'paused'
+    this.state = 'menu';
+
     // Core Managers
     this.scene = null;
     this.camera = null;
@@ -21,7 +24,7 @@ export class Game {
     this.workout = new WorkoutManager('normal');
     this.ranking = new RankingManager();
 
-    // Flight Physics (X locked to 0, Y begins at cruise 35m)
+    // Flight Physics
     this.position = new THREE.Vector3(0, 36, 0);
     this.velocity = new THREE.Vector3(0, 0, 18);
 
@@ -46,6 +49,7 @@ export class Game {
 
     this.keys = {};
     this.onHUDUpdate = null;
+    this.onStateChange = null;
 
     this.initThree();
     this.initControls();
@@ -111,6 +115,43 @@ export class Game {
     this.workout.setDifficulty(diff);
   }
 
+  startFlight() {
+    this.state = 'playing';
+    this.workout.reset();
+    this.score = 0;
+    this.combo = 1;
+    this.distanceMeters = 0;
+    this.calories = 0;
+    this.maxRpmRecorded = 0;
+    this.position.set(0, 36, 0);
+    this.audio.resume();
+
+    if (this.onStateChange) {
+      this.onStateChange(this.state);
+    }
+  }
+
+  pauseFlight() {
+    this.state = 'paused';
+    if (this.onStateChange) {
+      this.onStateChange(this.state);
+    }
+  }
+
+  resumeFlight() {
+    this.state = 'playing';
+    if (this.onStateChange) {
+      this.onStateChange(this.state);
+    }
+  }
+
+  returnToMenu() {
+    this.state = 'menu';
+    if (this.onStateChange) {
+      this.onStateChange(this.state);
+    }
+  }
+
   start() {
     this.clock = new THREE.Clock();
     this.audio.init();
@@ -133,10 +174,34 @@ export class Game {
   }
 
   update(delta) {
+    // 1. MENU STATE: Cinematic Showcase Hover
+    if (this.state === 'menu') {
+      const time = performance.now() * 0.001;
+      this.helibike.mesh.position.set(0, 36 + Math.sin(time * 1.5) * 0.5, 0);
+      this.helibike.mesh.rotation.y = Math.sin(time * 0.6) * 0.35;
+      this.helibike.mesh.rotation.z = Math.sin(time * 1.2) * 0.06;
+
+      // Gentle rotor idle spin
+      this.helibike.update(delta, 45, 0, false);
+
+      // Camera views the Helibike slightly from the front/side
+      const camX = Math.sin(time * 0.3) * 6;
+      const camZ = -9 + Math.cos(time * 0.3) * 3;
+      this.camera.position.lerp(new THREE.Vector3(camX, 38, camZ), delta * 4);
+      this.camera.lookAt(new THREE.Vector3(0, 36.5, 0));
+      return;
+    }
+
+    // 2. PAUSED STATE
+    if (this.state === 'paused') {
+      return;
+    }
+
+    // 3. PLAYING STATE: Full Flight Simulation
     this.totalSeconds += delta;
 
-    // 1. Cadence determination
-    if (this.isSimulated || (!this.bluetooth.bikeDevice && this.targetCadence === 0)) {
+    // Cadence determination
+    if (this.isSimulated || (!this.bluetooth.bikeDeviceId && this.targetCadence === 0)) {
       this.targetCadence = this.simRpm;
       this.currentSpeedKmh = (this.targetCadence / 80) * 32;
     }
@@ -147,27 +212,19 @@ export class Game {
       this.maxRpmRecorded = Math.round(this.currentCadence);
     }
 
-    // 2. Workout Intervals
+    // Workout Intervals advancement
     this.workout.update(delta);
     const workoutStatus = this.workout.getStatus(Math.round(this.currentCadence));
 
-    // 3. Equilibrium Flight Altitude directly mapped to Cadence RPM
-    // Prevents runaway climbing to ceiling!
-    // 30 RPM -> 18m
-    // 55 RPM -> 36m (Warmup cruise)
-    // 75 RPM -> 65m (Sprint 1)
-    // 90 RPM -> 85m (Sprint 2)
-    // 105 RPM -> 105m (Sprint 3)
-    // 120+ RPM -> 120m (Stratosphere)
+    // Target flight altitude based on Cadence RPM (Aerodynamic equilibrium)
     let targetAltitude = 18;
     if (this.currentCadence > 30) {
       const norm = Math.min(1.0, (this.currentCadence - 30) / 90.0);
       targetAltitude = 18 + Math.pow(norm, 1.15) * 102;
     }
 
-    // Smooth climb / descent towards target equilibrium
     this.position.y = THREE.MathUtils.lerp(this.position.y, targetAltitude, delta * 2.8);
-    this.position.x = 0; // Centered
+    this.position.x = 0;
 
     // Forward Speed
     const forwardSpeed = 14.0 + (this.currentCadence / 100.0) * 16.0;
@@ -180,10 +237,10 @@ export class Game {
     const isSprint = workoutStatus.isSprint && workoutStatus.isMeetingTarget;
     this.helibike.update(delta, this.currentCadence, forwardSpeed, isSprint);
 
-    // 4. Audio
+    // Audio
     this.audio.updatePropeller(this.currentCadence);
 
-    // 5. Update 3D World (Rings spawn matching the workout target altitude!)
+    // World Update (Rings & Gems)
     this.world.update(
       delta,
       this.position,
@@ -193,7 +250,7 @@ export class Game {
       (gem) => this.handleGemCollected(gem, workoutStatus)
     );
 
-    // 6. Camera follows behind Helibike
+    // Follow Camera
     const cameraTargetPos = new THREE.Vector3(
       0,
       this.position.y + 2.5,
@@ -208,11 +265,11 @@ export class Game {
     );
     this.camera.lookAt(lookAtTarget);
 
-    // 7. Calories
+    // Calories
     const calPerSecond = (0.12 + (this.currentCadence / 100) * 0.2);
     this.calories += calPerSecond * delta;
 
-    // 8. HUD Update
+    // HUD Update
     if (this.onHUDUpdate) {
       this.onHUDUpdate({
         cadence: Math.round(this.currentCadence),
@@ -224,7 +281,8 @@ export class Game {
         calories: Math.round(this.calories),
         heartRate: this.currentHeartRate,
         workout: workoutStatus,
-        maxRpm: this.maxRpmRecorded
+        maxRpm: this.maxRpmRecorded,
+        gameState: this.state
       });
     }
   }

@@ -4,18 +4,99 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b0f19">
-  <title>SkyGame: Helibike 3D - Intervalos & Sprints</title>
+  <title>SkyGame: Helibike 3D - Simulador de Voo & HIIT</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <!-- 3D WebGL Canvas Container -->
   <div id="canvas-container"></div>
 
-  <!-- UI & Cockpit HUD Overlay -->
-  <div id="ui-overlay">
-    <!-- Top Control Bar (Balanced 3-column layout) -->
+  <!-- MAIN MENU OVERLAY (Initial Screen) -->
+  <div id="main-menu-overlay" class="menu-backdrop visible">
+    <div class="menu-card">
+      <div class="menu-brand">
+        <h1 class="game-logo">🚁 SKYGAME: HELIBIKE</h1>
+        <p class="game-tagline">Treino HIIT & Simulador de Voo com Bicicleta Estática</p>
+      </div>
+
+      <div class="menu-sections-grid">
+        <!-- 1. Connectivity Section -->
+        <div class="menu-section-card">
+          <span class="section-label">1. Conectividade Bluetooth</span>
+          <div class="connect-action-row">
+            <button id="menu-btn-bike" class="menu-connect-btn">
+              <span class="icon">🚲</span>
+              <div class="info">
+                <span class="name">Bicicleta Estática</span>
+                <span class="status" id="menu-bike-status">Não Conectada (Toca p/ Ligar)</span>
+              </div>
+            </button>
+
+            <button id="menu-btn-hr" class="menu-connect-btn heart">
+              <span class="icon">❤️</span>
+              <div class="info">
+                <span class="name">Smartwatch / FC</span>
+                <span class="status" id="menu-hr-status">Opcional (Toca p/ Ligar)</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Difficulty Selection Section -->
+        <div class="menu-section-card">
+          <span class="section-label">2. Escolhe a Dificuldade do Treino</span>
+          <div class="difficulty-cards-row">
+            <button class="diff-btn" data-diff="facil">
+              <span class="tag green">Fácil</span>
+              <span class="rpm-rule">+10 RPM / nível</span>
+              <span class="desc">Inicia a 65 RPM</span>
+            </button>
+
+            <button class="diff-btn active" data-diff="normal">
+              <span class="tag yellow">Normal</span>
+              <span class="rpm-rule">+15 RPM / nível</span>
+              <span class="desc">Inicia a 75 RPM</span>
+            </button>
+
+            <button class="diff-btn" data-diff="dificil">
+              <span class="tag red">Difícil</span>
+              <span class="rpm-rule">+20 RPM / nível</span>
+              <span class="desc">Inicia a 85 RPM</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Records & Quick Options Section -->
+        <div class="menu-section-card">
+          <span class="section-label">3. Recordes & Opções</span>
+          <div class="quick-options-row">
+            <button id="menu-btn-ranking" class="menu-opt-btn rank">
+              <span>🏆</span> Ver Ranking
+            </button>
+
+            <button id="menu-btn-sim" class="menu-opt-btn">
+              <span>🎮</span> Modo Simulação: <strong id="sim-status-label">OFF</strong>
+            </button>
+
+            <button id="menu-btn-sound" class="menu-opt-btn">
+              <span id="sound-icon">🔊</span> Som: <strong id="sound-status-label">ON</strong>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Big Prominent Start Button -->
+      <button id="btn-start-game" class="btn-giant-start">
+        <span>🚀</span> INICIAR TREINO (3 MIN AQUECIMENTO)
+      </button>
+    </div>
+  </div>
+
+  <!-- IN-GAME HUD OVERLAY (Active During Flight) -->
+  <div id="ui-overlay" class="hidden">
+    <!-- Top Control Bar -->
     <header class="top-bar">
-      <!-- Top Left: Distance, Calories & Altitude -->
+      <!-- Left: Distance, Calories & Altitude -->
       <div class="top-left-stats">
         <div class="stat-chip">
           <span class="label">Distância</span>
@@ -36,7 +117,7 @@
         </div>
       </div>
 
-      <!-- Top Center: Workout Interval Banner & Quick Action Buttons -->
+      <!-- Center: Workout Banner & In-flight Controls -->
       <div class="top-center-group">
         <div class="workout-center-banner" id="workout-banner">
           <span class="workout-phase-title" id="workout-phase-title">AQUECIMENTO</span>
@@ -47,31 +128,24 @@
           <span class="workout-status-badge" id="workout-status-badge">RITMO INICIAL</span>
         </div>
 
-        <!-- Action Pills Bar neatly centered under workout banner -->
+        <!-- In-flight Mini Action Pills -->
         <div class="connection-buttons">
-          <div class="difficulty-select-wrap">
-            <select id="select-difficulty" title="Dificuldade do treino">
-              <option value="facil">Fácil (+10)</option>
-              <option value="normal" selected>Normal (+15)</option>
-              <option value="dificil">Difícil (+20)</option>
-            </select>
-          </div>
-          <button id="btn-ranking" class="btn-pill rank" title="Ver classificação">
+          <button id="btn-pause-game" class="btn-pill" title="Pausar voo">
+            <span>⏸️</span> Pausa
+          </button>
+          <button id="btn-ranking-hud" class="btn-pill rank" title="Ver ranking">
             <span>🏆</span> Ranking
           </button>
-          <button id="btn-connect-bike" class="btn-pill" title="Ligar à bicicleta FTMS">
-            <span>🚲</span> Ligar Bike
+          <button id="btn-connect-bike-hud" class="btn-pill" title="Ligar bike">
+            <span>🚲</span> Bike
           </button>
-          <button id="btn-connect-hr" class="btn-pill heart" title="Ligar ao Smartwatch">
-            <span>❤️</span> Relógio
-          </button>
-          <button id="btn-toggle-sim" class="btn-pill" title="Ativar modo de teste">
-            <span>🎮</span> Sim
+          <button id="btn-connect-hr-hud" class="btn-pill heart" title="Ligar relógio">
+            <span>❤️</span> FC
           </button>
         </div>
       </div>
 
-      <!-- Top Right: Score & Multiplier (Always visible!) -->
+      <!-- Right: Score & Multiplier -->
       <div class="top-right-score">
         <span class="score-num" id="val-score">0</span>
         <span class="combo-tag" id="val-combo">COMBO 1x</span>
@@ -105,7 +179,7 @@
       </div>
     </footer>
 
-    <!-- Manual Simulation Controls -->
+    <!-- Manual Simulation Controls (if sim active) -->
     <div id="sim-drawer">
       <span style="font-size: 11px; font-weight: 700;">Simular RPM:</span>
       <input type="range" id="sim-rpm-slider" min="0" max="140" value="60">
@@ -113,7 +187,20 @@
     </div>
   </div>
 
-  <!-- Ranking / Leaderboard Modal -->
+  <!-- PAUSE MODAL -->
+  <div class="modal-backdrop" id="pause-modal">
+    <div class="ranking-card" style="max-width: 380px; text-align: center;">
+      <h2 style="color: #38bdf8; margin-bottom: 16px; font-size: 20px;">⏸️ Voo em Pausa</h2>
+      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 20px;">Pausa para beber água ou recuperar o fôlego!</p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn-giant-start" id="btn-resume-flight" style="padding: 10px; font-size: 14px;">▶ Continuar Voo</button>
+        <button class="btn-close-modal" id="btn-save-score-pause" style="background: rgba(251, 191, 36, 0.2); border-color: #fbbf24; color: #fde68a;">🏆 Terminar e Gravar Recorde</button>
+        <button class="btn-close-modal" id="btn-return-menu">🏠 Menu Principal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANKING / LEADERBOARD MODAL -->
   <div class="modal-backdrop" id="ranking-modal">
     <div class="ranking-card">
       <div class="ranking-header">
@@ -145,7 +232,7 @@
         </table>
       </div>
 
-      <button class="btn-close-modal" id="btn-close-ranking-bottom">Voltar ao Jogo</button>
+      <button class="btn-close-modal" id="btn-close-ranking-bottom">Voltar</button>
     </div>
   </div>
 

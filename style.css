@@ -25,7 +25,264 @@ body, html {
   z-index: 1;
 }
 
-/* UI Overlay */
+/* Visibility helpers */
+.hidden {
+  display: none !important;
+}
+
+/* =========================================================
+   1. MAIN MENU OVERLAY (Initial Screen)
+   ========================================================= */
+.menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.75) 0%, rgba(11, 15, 25, 0.92) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 150;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  pointer-events: auto;
+}
+
+.menu-card {
+  width: 100%;
+  max-width: 680px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Menu Brand Header */
+.menu-brand {
+  text-align: center;
+}
+
+.game-logo {
+  font-size: 24px;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+  margin-bottom: 2px;
+}
+
+.game-tagline {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Grid of Configuration Sections */
+.menu-sections-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-section-card {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 8px 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.section-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+/* Connectivity Row */
+.connect-action-row {
+  display: flex;
+  gap: 10px;
+}
+
+.menu-connect-btn {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.menu-connect-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.menu-connect-btn.connected {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.18);
+}
+.menu-connect-btn.connected .status {
+  color: #86efac;
+}
+
+.menu-connect-btn.heart {
+  border-color: rgba(244, 63, 94, 0.4);
+}
+.menu-connect-btn.heart.connected {
+  border-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.2);
+}
+.menu-connect-btn.heart.connected .status {
+  color: #fda4af;
+}
+
+.menu-connect-btn .icon {
+  font-size: 22px;
+}
+.menu-connect-btn .info .name {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+}
+.menu-connect-btn .info .status {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* Difficulty Cards Row */
+.difficulty-cards-row {
+  display: flex;
+  gap: 10px;
+}
+
+.diff-btn {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.diff-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.diff-btn.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.2);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  transform: scale(1.02);
+}
+
+.diff-btn .tag {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.diff-btn .tag.green { color: #4ade80; }
+.diff-btn .tag.yellow { color: #facc15; }
+.diff-btn .tag.red { color: #f87171; }
+
+.diff-btn .rpm-rule {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.diff-btn .desc {
+  font-size: 8px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* Quick Options Row */
+.quick-options-row {
+  display: flex;
+  gap: 10px;
+}
+
+.menu-opt-btn {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.menu-opt-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-opt-btn.rank {
+  border-color: #fbbf24;
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.12);
+}
+.menu-opt-btn.rank:hover {
+  background: rgba(251, 191, 36, 0.25);
+}
+
+/* Big Start Button */
+.btn-giant-start {
+  background: linear-gradient(135deg, #22c55e 0%, #059669 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 13px 20px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.5);
+  letter-spacing: 0.8px;
+  transition: all 0.2s ease;
+}
+
+.btn-giant-start:hover, .btn-giant-start:active {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.7);
+  filter: brightness(1.1);
+}
+
+/* =========================================================
+   2. IN-GAME HUD OVERLAY
+   ========================================================= */
 #ui-overlay {
   position: absolute;
   top: 0;
@@ -40,7 +297,6 @@ body, html {
   padding: 8px 14px;
 }
 
-/* Top Bar: Clean 3-column layout (Left, Center Group, Right) */
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -50,7 +306,6 @@ body, html {
   gap: 8px;
 }
 
-/* Top Left Stats */
 .top-left-stats {
   display: flex;
   align-items: center;
@@ -129,7 +384,7 @@ body, html {
   color: #94a3b8;
 }
 
-/* Top Center Group: Workout Banner + Compact Action Bar */
+/* Center Banner in Flight */
 .top-center-group {
   display: flex;
   flex-direction: column;
@@ -174,7 +429,6 @@ body, html {
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
-
 .workout-center-banner.sprint-active .workout-phase-title {
   color: #fb923c;
 }
@@ -223,12 +477,11 @@ body, html {
   color: #ffffff;
 }
 
-/* Action Buttons Bar underneath workout banner */
+/* In-flight Buttons */
 .connection-buttons {
   display: flex;
   gap: 5px;
   align-items: center;
-  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -276,34 +529,7 @@ body, html {
   background: rgba(251, 191, 36, 0.25);
 }
 
-/* Difficulty Selector Dropdown */
-.difficulty-select-wrap {
-  display: flex;
-  align-items: center;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 1px 6px;
-  pointer-events: auto;
-}
-
-.difficulty-select-wrap select {
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 800;
-  outline: none;
-  cursor: pointer;
-  padding: 2px;
-}
-
-.difficulty-select-wrap select option {
-  background: #0f172a;
-  color: #ffffff;
-}
-
-/* Top Right Score & Multiplier (Always Visible) */
+/* Score Panel */
 .top-right-score {
   display: flex;
   flex-direction: column;
@@ -331,7 +557,7 @@ body, html {
   text-transform: uppercase;
 }
 
-/* Bottom Cockpit Dashboard */
+/* Bottom Cockpit */
 .bottom-cockpit {
   width: 100%;
   display: flex;
@@ -391,11 +617,6 @@ body, html {
   text-shadow: 0 0 16px rgba(249, 115, 22, 0.8);
 }
 
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
-  100% { box-shadow: 0 0 30px rgba(249, 115, 22, 0.8); }
-}
-
 .hr-val-group {
   display: flex;
   align-items: center;
@@ -426,7 +647,7 @@ body, html {
   margin-top: 2px;
 }
 
-/* Simulation Controls drawer */
+/* Simulation Controls */
 #sim-drawer {
   position: absolute;
   bottom: 85px;
@@ -453,7 +674,7 @@ body, html {
   accent-color: #38bdf8;
 }
 
-/* Status Toast Notification */
+/* Toast */
 #status-toast {
   position: absolute;
   top: 90px;
@@ -470,7 +691,7 @@ body, html {
   box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
   display: none;
   pointer-events: auto;
-  z-index: 100;
+  z-index: 250;
   line-height: 1.4;
 }
 
@@ -482,7 +703,7 @@ body, html {
   color: #fecdd3;
 }
 
-/* Modal Overlay for Ranking */
+/* Modals */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -492,7 +713,7 @@ body, html {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 200;
+  z-index: 300;
   display: none;
   justify-content: center;
   align-items: center;
